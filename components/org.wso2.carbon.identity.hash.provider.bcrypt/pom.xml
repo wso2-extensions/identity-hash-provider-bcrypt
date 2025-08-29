@@ -20,17 +20,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <groupId>org.wso2.carbon.identity.hash.provider.pbkdf2</groupId>
+        <groupId>org.wso2.carbon.identity.hash.provider.bcrypt</groupId>
         <artifactId>identity-hash-provider-bcrypt</artifactId>
         <version>0.1.7</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>bcrypt</artifactId>
+    <artifactId>org.wso2.carbon.identity.hash.provider.bcrypt</artifactId>
     <packaging>bundle</packaging>
     <name>WSO2 Carbon - Bcrypt</name>
-    <description>PBKDF2 password hashing algorithm service</description>
+    <description>BCrypt password hashing algorithm service</description>
     <url>http://wso2.org</url>
 
     <dependencies>

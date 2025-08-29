@@ -18,14 +18,14 @@
 
 package org.wso2.carbon.identity.hash.provider.bcrypt;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.wso2.carbon.identity.hash.provider.bcrypt.constant.Constants;
 import org.wso2.carbon.user.core.exceptions.HashProviderException;
 import org.wso2.carbon.user.core.hash.HashProvider;
 import org.wso2.carbon.user.core.hash.HashProviderFactory;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The class contains the implementation of Bcrypt HashProvider Factory.
@@ -50,6 +50,8 @@ public class BcryptHashProviderFactory implements HashProviderFactory {
     public Set<String> getHashProviderConfigProperties() {
         Set<String> metaProperties = new HashSet<>();
         metaProperties.add(Constants.COST_FACTOR_PROPERTY);
+        metaProperties.add(Constants.VERSION_PROPERTY);
+
         return metaProperties;
     }
 

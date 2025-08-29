@@ -33,7 +33,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
  * BCrypt password hashing implementation using OpenBSDBCrypt.
  */
@@ -53,73 +52,82 @@ public class BcryptHashProvider implements HashProvider {
 
     @Override
     public void init(Map<String, Object> initProperties) throws HashProviderException {
+
         init();
-        Object costFactorObject = initProperties.get(Constants.COST_FACTOR_PROPERTY);
-        Object versionObject = initProperties.get(Constants.VERSION_PROPERTY);
+        if (initProperties != null) {
+            Object costFactorObject = initProperties.get(Constants.COST_FACTOR_PROPERTY);
+            Object versionObject = initProperties.get(Constants.VERSION_PROPERTY);
 
-        if (costFactorObject != null) {
-            try {
-                costFactor = Integer.parseInt(costFactorObject.toString());
-                validateCostFactor(costFactor);
-            } catch (NumberFormatException e) {
-                throw new HashProviderClientException(
-                        "BCrypt cost factor must be an integer between 4-31. Got: " + costFactorObject, e);
+            if (costFactorObject != null) {
+                try {
+                    costFactor = Integer.parseInt(costFactorObject.toString());
+                    validateCostFactor(costFactor);
+                } catch (NumberFormatException e) {
+                    throw new HashProviderClientException(
+                            ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getDescription(),
+                            Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                                    ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getCode());
+                }
             }
-        }
 
-        if (versionObject != null) {
-            try {
+            if (versionObject != null) {
                 version = versionObject.toString();
                 validateVersion(version);
-            } catch (Exception e) {
-                throw new HashProviderClientException(
-                        "BCrypt version must be a supported string ('2a', '2y', or '2b'). Got: " + versionObject, e);
             }
         }
     }
 
     @Override
     public byte[] calculateHash(char[] plainText, String salt) throws HashProviderException {
-        validatePassword(plainText);
+        if (plainText == null || plainText.length == 0) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_EMPTY_VALUE.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_EMPTY_VALUE.getCode());
+        }
+
+        String actualSalt = salt;
+        if (StringUtils.isEmpty(actualSalt)) {
+            actualSalt = generateSalt();
+        } else {
+            validateSalt(actualSalt);
+        }
 
         int byteLength = getUtf8ByteLength(plainText);
         if (byteLength > Constants.BCRYPT_MAX_PLAINTEXT_LENGTH) {
             throw new HashProviderClientException(
-                    "Password exceeds BCrypt's 72-byte limit. Length: " + byteLength + " bytes");
+                    ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getCode());
+        }
+
+        byte[] saltBytes;
+        try {
+            saltBytes = Base64.getDecoder().decode(actualSalt);
+        } catch (IllegalArgumentException e) {
+            log.error(ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getDescription(), e);
+            throw new HashProviderServerException(
+                    ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode(), e);
+        }
+
+        if (saltBytes.length != Constants.BCRYPT_SALT_LENGTH) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_INVALID_SALT_LENGTH.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_INVALID_SALT_LENGTH.getCode());
         }
 
         try {
-            byte[] saltBytes;
-
-            if (StringUtils.isNotEmpty(salt)) {
-                saltBytes = Base64.getDecoder().decode(salt);
-                if (saltBytes.length != Constants.BCRYPT_SALT_LENGTH) {
-                    throw new HashProviderClientException(
-                            "Salt must be exactly 16 bytes when decoded. Got: " + saltBytes.length + " bytes");
-                }
-            } else {
-                String msg = "A salt must be provided for hashing.";
-                log.error(msg);
-                throw new HashProviderClientException(msg);
-            }
-
             String bcryptHash = OpenBSDBCrypt.generate(version, plainText, saltBytes, costFactor);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Generated BCrypt hash: " + bcryptHash);
-                log.debug("Hash length: " + bcryptHash.length() + " characters");
-            }
-
             return bcryptHash.getBytes(StandardCharsets.UTF_8);
-
-        } catch (IllegalArgumentException e) {
-            String msg = "Invalid input for BCrypt hashing.";
-            log.error(msg, e);
-            throw new HashProviderClientException(msg, e);
         } catch (Exception e) {
-            String msg = "Error generating BCrypt hash";
-            log.error(msg, e);
-            throw new HashProviderServerException(msg, e);
+            log.error(ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILURE.getDescription(), e);
+            throw new HashProviderServerException(
+                    ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILURE.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILURE.getCode(), e);
         }
     }
 
@@ -136,46 +144,86 @@ public class BcryptHashProvider implements HashProvider {
         return Constants.BCRYPT_HASHING_ALGORITHM;
     }
 
-    /**
-     * Validate cost factor is within acceptable bounds (4-31)
-     */
-    private void validateCostFactor(int costFactor) throws HashProviderClientException {
-        if (costFactor < 4) {
-            throw new HashProviderClientException(
-                    "BCrypt cost factor too low (minimum: 4). Low values compromise security.");
+    @Override
+    public boolean supportsValidateHash() {
+        return true;
+    }
+
+    @Override
+    public boolean validateHash(char[] plainText, byte[] hashedPassword, String salt) throws HashProviderException {
+        if (plainText == null || hashedPassword == null) {
+            return false;
         }
-        if (costFactor > 31) {
-            throw new HashProviderClientException(
-                    "BCrypt cost factor too high (maximum: 31). High values impact performance.");
+
+        String storedHash = new String(hashedPassword, StandardCharsets.UTF_8);
+
+        if (plainText.length == 0 || storedHash.length() != 60) {
+            return false;
+        }
+
+        try {
+            return OpenBSDBCrypt.checkPassword(storedHash, plainText);
+        } catch (Exception e) {
+            log.error(ErrorMessage.ERROR_CODE_VALIDATION_FAILURE.getDescription(), e);
+            return false;
         }
     }
 
     /**
-     * Validate BCrypt version is supported
+     * Generates a new random salt for hashing.
+     *
+     * @return The Base64 encoded salt string.
+     */
+    public String generateSalt() {
+        byte[] saltBytes = new byte[Constants.BCRYPT_SALT_LENGTH];
+        secureRandom.nextBytes(saltBytes);
+        return Base64.getEncoder().encodeToString(saltBytes);
+    }
+
+    /**
+     * Validate cost factor is within acceptable bounds (4-31).
+     */
+    private void validateCostFactor(int costFactor) throws HashProviderClientException {
+        if (costFactor < 4 || costFactor > 31) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getCode());
+        }
+    }
+
+    /**
+     * Validate BCrypt version is supported.
      */
     private void validateVersion(String version) throws HashProviderClientException {
         if (version == null || (!version.equals("2a") && !version.equals("2y") && !version.equals("2b"))) {
             throw new HashProviderClientException(
-                    "Unsupported BCrypt version. Must be '2a', '2y', or '2b'. Got: " + version);
+                    ErrorMessage.ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION.getCode());
         }
     }
 
     /**
-     * Validate password is not null or empty
+     * Validate salt is not null and empty.
      */
-    private void validatePassword(char[] plainText) throws HashProviderClientException {
-        if (plainText == null || plainText.length == 0) {
-            throw new HashProviderClientException("Password cannot be null or empty");
+    private void validateSalt(String salt) throws HashProviderClientException {
+        if (salt == null) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode());
         }
     }
 
     /**
-     * Calculate UTF-8 byte length of password
+     * Calculate UTF-8 byte length of password.
      */
-    private int getUtf8ByteLength(char[] chars) {
+    int getUtf8ByteLength(char[] chars) {
         if (chars == null || chars.length == 0) {
             return 0;
         }
         return new String(chars).getBytes(StandardCharsets.UTF_8).length;
     }
 }
+

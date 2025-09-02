@@ -24,22 +24,19 @@ package org.wso2.carbon.identity.hash.provider.bcrypt;
 public enum ErrorMessage {
 
     // Client Errors.
-    ERROR_CODE_EMPTY_VALUE("60001", "Empty value", "Value cannot be null or empty."),
-    ERROR_CODE_INVALID_COST_FACTOR_RANGE("60002", "Invalid cost factor range",
+    ERROR_CODE_INVALID_COST_FACTOR_RANGE("60001", "Invalid cost factor range",
             "BCrypt cost factor must be an integer between 4-31."),
-    ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION("60003", "Unsupported BCrypt version",
+    ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION("60002", "Unsupported BCrypt version",
             "BCrypt version must be a supported string ('2a', '2y', or '2b')."),
-    ERROR_CODE_INVALID_SALT_FORMAT("60004", "Invalid salt format", "Salt must be a valid Base64 encoded string."),
-    ERROR_CODE_INVALID_SALT_LENGTH("60005", "Invalid salt length",
-            "Salt must be exactly 16 bytes when decoded."),
-    ERROR_CODE_PLAIN_TEXT_TOO_LONG("60006", "Plain text too long",
+    ERROR_CODE_PLAIN_TEXT_TOO_LONG("60003", "Plain text too long",
             "Plain text value exceeds BCrypt's 72-byte limit."),
-
-    // Server Errors.
-    ERROR_CODE_HASH_GENERATION_FAILURE("65001", "Hash generation failed",
-            "An unexpected error occurred while generating the BCrypt hash."),
-    ERROR_CODE_VALIDATION_FAILURE("65002", "Hash validation failed",
-            "An unexpected error occurred during BCrypt hash validation.");
+    ERROR_CODE_HASH_VALIDATION_FAILED("60004", "Hash validation failed",
+            "Failed to validate BCrypt hash due to invalid input parameters."),
+    ERROR_CODE_SALT_GENERATION_FAILED("60005", "Salt generation failed",
+            "Failed to generate secure random salt bytes."),
+    ERROR_CODE_HASH_GENERATION_FAILED("60004", "Hash generation failed",
+            "Failed to generate BCrypt hash due to invalid input parameters."),
+    ERROR_CODE_EMPTY_VALUE("60001", "Empty value", "Value cannot be empty");
 
     private final String code;
     private final String message;

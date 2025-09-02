@@ -29,8 +29,9 @@ public class Constants {
     public static final String VERSION_PROPERTY = "bcrypt.version";
     public static final String BCRYPT_HASHING_ALGORITHM = "BCRYPT";
     public static final int DEFAULT_COST_FACTOR = 12;
-    public static final int BCRYPT_MAX_PLAINTEXT_LENGTH = 72;
+    public static final int BCRYPT_MAX_PLAINTEXT_LENGTH = 73;
     public static final int BCRYPT_SALT_LENGTH = 16;
     public static final String DEFAULT_BCRYPT_VERSION = "2b";
+    public static final String RANDOM_ALG_DRBG = "DRBG";
 
 }

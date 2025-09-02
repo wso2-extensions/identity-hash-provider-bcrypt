@@ -17,19 +17,16 @@
  */
 package org.wso2.carbon.identity.hash.provider.bcrypt;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.wso2.carbon.identity.hash.provider.bcrypt.constant.Constants;
 import org.wso2.carbon.user.core.exceptions.HashProviderClientException;
 import org.wso2.carbon.user.core.exceptions.HashProviderException;
-import org.wso2.carbon.user.core.exceptions.HashProviderServerException;
 import org.wso2.carbon.user.core.hash.HashProvider;
 
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,9 +34,6 @@ import java.util.Map;
  * BCrypt password hashing implementation using OpenBSDBCrypt.
  */
 public class BcryptHashProvider implements HashProvider {
-
-    private static final Log log = LogFactory.getLog(BcryptHashProvider.class);
-    private static final SecureRandom secureRandom = new SecureRandom();
 
     private int costFactor;
     private String version;
@@ -79,55 +73,17 @@ public class BcryptHashProvider implements HashProvider {
 
     @Override
     public byte[] calculateHash(char[] plainText, String salt) throws HashProviderException {
-        if (plainText == null || plainText.length == 0) {
-            throw new HashProviderClientException(
-                    ErrorMessage.ERROR_CODE_EMPTY_VALUE.getDescription(),
-                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_EMPTY_VALUE.getCode());
-        }
-
-        String actualSalt = salt;
-        if (StringUtils.isEmpty(actualSalt)) {
-            actualSalt = generateSalt();
-        } else {
-            validateSalt(actualSalt);
-        }
-
-        int byteLength = getUtf8ByteLength(plainText);
-        if (byteLength > Constants.BCRYPT_MAX_PLAINTEXT_LENGTH) {
-            throw new HashProviderClientException(
-                    ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getDescription(),
-                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getCode());
-        }
-
-        byte[] saltBytes;
-        try {
-            saltBytes = Base64.getDecoder().decode(actualSalt);
-        } catch (IllegalArgumentException e) {
-            log.error(ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getDescription(), e);
-            throw new HashProviderServerException(
-                    ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getDescription(),
-                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode(), e);
-        }
-
-        if (saltBytes.length != Constants.BCRYPT_SALT_LENGTH) {
-            throw new HashProviderClientException(
-                    ErrorMessage.ERROR_CODE_INVALID_SALT_LENGTH.getDescription(),
-                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_INVALID_SALT_LENGTH.getCode());
-        }
+        validateEmptyValue(plainText);
+        validatePlainTextLength(plainText);
 
         try {
-            String bcryptHash = OpenBSDBCrypt.generate(version, plainText, saltBytes, costFactor);
+            String bcryptHash = OpenBSDBCrypt.generate(version, plainText, generateSalt(), costFactor);
             return bcryptHash.getBytes(StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            log.error(ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILURE.getDescription(), e);
-            throw new HashProviderServerException(
-                    ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILURE.getDescription(),
+        } catch (IllegalArgumentException | DataLengthException e) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILED.getDescription(),
                     Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILURE.getCode(), e);
+                            ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILED.getCode());
         }
     }
 
@@ -151,33 +107,47 @@ public class BcryptHashProvider implements HashProvider {
 
     @Override
     public boolean validateHash(char[] plainText, byte[] hashedPassword, String salt) throws HashProviderException {
-        if (plainText == null || hashedPassword == null) {
-            return false;
-        }
-
         String storedHash = new String(hashedPassword, StandardCharsets.UTF_8);
-
-        if (plainText.length == 0 || storedHash.length() != 60) {
-            return false;
-        }
-
         try {
             return OpenBSDBCrypt.checkPassword(storedHash, plainText);
-        } catch (Exception e) {
-            log.error(ErrorMessage.ERROR_CODE_VALIDATION_FAILURE.getDescription(), e);
-            return false;
+        } catch (IllegalArgumentException | DataLengthException e) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_HASH_VALIDATION_FAILED.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_HASH_VALIDATION_FAILED.getCode());
         }
     }
 
     /**
      * Generates a new random salt for hashing.
      *
-     * @return The Base64 encoded salt string.
+     * @return The salt bytes.
      */
-    public String generateSalt() {
-        byte[] saltBytes = new byte[Constants.BCRYPT_SALT_LENGTH];
-        secureRandom.nextBytes(saltBytes);
-        return Base64.getEncoder().encodeToString(saltBytes);
+    public byte[] generateSalt() throws HashProviderException {
+        try {
+            SecureRandom secureRandom = SecureRandom.getInstance(Constants.RANDOM_ALG_DRBG);
+            byte[] saltBytes = new byte[Constants.BCRYPT_SALT_LENGTH];
+            secureRandom.nextBytes(saltBytes);
+            return saltBytes;
+        } catch (NoSuchAlgorithmException e) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_SALT_GENERATION_FAILED.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_SALT_GENERATION_FAILED.getCode());
+        }
+    }
+
+    /**
+     * Validates plain text length against BCrypt maximum limit.
+     * Throws HashProviderClientException if text exceeds limit.
+     */
+    private void validatePlainTextLength(char[] plainText) throws HashProviderClientException {
+        if (getUtf8ByteLength(plainText) > Constants.BCRYPT_MAX_PLAINTEXT_LENGTH) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getCode());
+        }
     }
 
     /**
@@ -193,6 +163,22 @@ public class BcryptHashProvider implements HashProvider {
     }
 
     /**
+     * This method is responsible fpr validating the value to be hashed.
+     *
+     * @param plainText The value which needs to be hashed.
+     * @throws HashProviderClientException If the hash value is not provided.
+     */
+    private void validateEmptyValue(char[] plainText) throws HashProviderClientException {
+
+        if (plainText == null || plainText.length == 0) {
+            throw new HashProviderClientException(
+                    ErrorMessage.ERROR_CODE_EMPTY_VALUE.getDescription(),
+                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
+                            ErrorMessage.ERROR_CODE_EMPTY_VALUE.getCode());
+        }
+    }
+
+    /**
      * Validate BCrypt version is supported.
      */
     private void validateVersion(String version) throws HashProviderClientException {
@@ -201,18 +187,6 @@ public class BcryptHashProvider implements HashProvider {
                     ErrorMessage.ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION.getDescription(),
                     Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
                             ErrorMessage.ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION.getCode());
-        }
-    }
-
-    /**
-     * Validate salt is not null and empty.
-     */
-    private void validateSalt(String salt) throws HashProviderClientException {
-        if (salt == null) {
-            throw new HashProviderClientException(
-                    ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getDescription(),
-                    Constants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode());
         }
     }
 

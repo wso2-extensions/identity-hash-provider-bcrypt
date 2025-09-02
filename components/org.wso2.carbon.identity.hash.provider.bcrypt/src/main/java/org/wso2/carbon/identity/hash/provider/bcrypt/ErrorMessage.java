@@ -34,9 +34,9 @@ public enum ErrorMessage {
             "Failed to validate BCrypt hash due to invalid input parameters."),
     ERROR_CODE_SALT_GENERATION_FAILED("60005", "Salt generation failed",
             "Failed to generate secure random salt bytes."),
-    ERROR_CODE_HASH_GENERATION_FAILED("60004", "Hash generation failed",
+    ERROR_CODE_HASH_GENERATION_FAILED("60006", "Hash generation failed",
             "Failed to generate BCrypt hash due to invalid input parameters."),
-    ERROR_CODE_EMPTY_VALUE("60001", "Empty value", "Value cannot be empty");
+    ERROR_CODE_EMPTY_VALUE("60007", "Empty value", "Value cannot be empty");
 
     private final String code;
     private final String message;

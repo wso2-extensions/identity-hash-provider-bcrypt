@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.hash.provider.bcrypt;
 
 import org.testng.Assert;
@@ -119,8 +120,7 @@ public class BcryptHashProviderFactoryTest {
         }
 
         if (version == null) {
-            Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY),
-                    costFactor == null ? Constants.DEFAULT_BCRYPT_VERSION : Constants.DEFAULT_BCRYPT_VERSION);
+            Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY), Constants.DEFAULT_BCRYPT_VERSION);
         } else {
             Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY), version);
         }
@@ -228,5 +228,22 @@ public class BcryptHashProviderFactoryTest {
         boolean isInvalid = provider.validateHash(wrongPassword, hash, null);
         Assert.assertFalse(isInvalid);
     }
-}
 
+    @Test
+    public void testFactoryCreatedProviderSaltIgnoringBehavior() throws HashProviderException {
+        HashProvider provider = bcryptHashProviderFactory.getHashProvider();
+        char[] password = "testPassword123".toCharArray();
+
+        // Test that salt parameter is ignored in factory-created providers too
+        byte[] hash1 = provider.calculateHash(password, "salt1");
+        byte[] hash2 = provider.calculateHash(password, "salt1"); // Same salt parameter
+
+        // Should be different because salt parameter is ignored
+        Assert.assertNotEquals(new String(hash1, java.nio.charset.StandardCharsets.UTF_8),
+                new String(hash2, java.nio.charset.StandardCharsets.UTF_8));
+
+        // But validation should still work
+        Assert.assertTrue(provider.validateHash(password, hash1, "any-salt"));
+        Assert.assertTrue(provider.validateHash(password, hash2, "any-salt"));
+    }
+}

@@ -27,6 +27,7 @@ import org.wso2.carbon.user.core.exceptions.HashProviderClientException;
 import org.wso2.carbon.user.core.exceptions.HashProviderException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -162,16 +163,38 @@ public class BcryptHashProviderTest {
     @Test
     public void testGenerateSalt() throws HashProviderException {
         initializeHashProvider("10", "2a");
-        String salt1 = bcryptHashProvider.generateSalt();
-        String salt2 = bcryptHashProvider.generateSalt();
+        byte[] salt1 = bcryptHashProvider.generateSalt();
+        byte[] salt2 = bcryptHashProvider.generateSalt();
 
         Assert.assertNotEquals(salt1, salt2);
         Assert.assertNotNull(salt1);
-        Assert.assertTrue(salt1.length() > 0);
+        Assert.assertEquals(salt1.length, Constants.BCRYPT_SALT_LENGTH);
     }
 
     @Test
-    public void testCalculateHashWithGeneratedSalt() throws HashProviderException {
+    public void testCalculateHashAlwaysGeneratesDifferentHashes() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        char[] password = "testPassword123".toCharArray();
+        byte[] hash1 = bcryptHashProvider.calculateHash(password, "any-salt-value");
+        byte[] hash2 = bcryptHashProvider.calculateHash(password, "any-salt-value");
+        byte[] hash3 = bcryptHashProvider.calculateHash(password, null);
+        byte[] hash4 = bcryptHashProvider.calculateHash(password, "different-salt-value");
+
+        Assert.assertNotEquals(new String(hash1, StandardCharsets.UTF_8),
+                new String(hash2, StandardCharsets.UTF_8));
+        Assert.assertNotEquals(new String(hash1, StandardCharsets.UTF_8),
+                new String(hash3, StandardCharsets.UTF_8));
+        Assert.assertNotEquals(new String(hash1, StandardCharsets.UTF_8),
+                new String(hash4, StandardCharsets.UTF_8));
+
+        Assert.assertEquals(new String(hash1, StandardCharsets.UTF_8).length(), 60);
+        Assert.assertEquals(new String(hash2, StandardCharsets.UTF_8).length(), 60);
+        Assert.assertEquals(new String(hash3, StandardCharsets.UTF_8).length(), 60);
+        Assert.assertEquals(new String(hash4, StandardCharsets.UTF_8).length(), 60);
+    }
+
+    @Test
+    public void testCalculateHashWithNullSalt() throws HashProviderException {
         initializeHashProvider("10", "2a");
         char[] password = "testPassword123".toCharArray();
 
@@ -180,73 +203,81 @@ public class BcryptHashProviderTest {
 
         Assert.assertNotEquals(new String(hash1, StandardCharsets.UTF_8),
                 new String(hash2, StandardCharsets.UTF_8));
-
-        Assert.assertEquals(new String(hash1, StandardCharsets.UTF_8).length(), 60);
-        Assert.assertEquals(new String(hash2, StandardCharsets.UTF_8).length(), 60);
     }
 
     @Test
-    public void testCalculateHashWithProvidedSalt() throws HashProviderException {
+    public void testCalculateHashWithProvidedSaltIsIgnored() throws HashProviderException {
         initializeHashProvider("10", "2a");
         char[] password = "testPassword123".toCharArray();
-        String salt = bcryptHashProvider.generateSalt();
 
-        byte[] hash1 = bcryptHashProvider.calculateHash(password, salt);
-        byte[] hash2 = bcryptHashProvider.calculateHash(password, salt);
+        byte[] hash1 = bcryptHashProvider.calculateHash(password, "fixed-salt-value");
+        byte[] hash2 = bcryptHashProvider.calculateHash(password, "fixed-salt-value");
 
-        Assert.assertEquals(new String(hash1, StandardCharsets.UTF_8),
+        Assert.assertNotEquals(new String(hash1, StandardCharsets.UTF_8),
                 new String(hash2, StandardCharsets.UTF_8));
     }
 
-    @DataProvider(name = "hashValidationScenarios")
-    public Object[][] hashValidationScenarios() throws HashProviderException {
+    @Test
+    public void testHashValidationWorks() throws HashProviderException {
         initializeHashProvider("10", "2a");
+        char[] password = "testPassword123".toCharArray();
 
-        char[] password1 = "testPassword123".toCharArray();
-        char[] password2 = "differentPassword456".toCharArray();
-        String salt = bcryptHashProvider.generateSalt();
+        byte[] hash = bcryptHashProvider.calculateHash(password, "any-value-ignored");
 
-        byte[] hash1 = bcryptHashProvider.calculateHash(password1, salt);
-        byte[] hash2 = bcryptHashProvider.calculateHash(password2, salt);
+        boolean isValid = bcryptHashProvider.validateHash(password, hash, "any-value-ignored");
+        Assert.assertTrue(isValid);
 
-        return new Object[][]{
-                {password1, hash1, salt, true},
-                {password2, hash1, salt, false},
-                {password1, hash2, salt, false},
-                {"".toCharArray(), hash1, salt, false},
-                {null, hash1, salt, false},
-                {password1, null, salt, false},
-                {password1, "invalid".getBytes(StandardCharsets.UTF_8), salt, false} // Invalid hash
-        };
+        boolean isInvalid = bcryptHashProvider.validateHash("wrongPassword".toCharArray(), hash, "any-value-ignored");
+        Assert.assertFalse(isInvalid);
     }
 
-    @Test(dataProvider = "hashValidationScenarios")
-    public void testValidateHash(char[] plainText, byte[] hashedPassword, String salt, boolean expected)
-            throws HashProviderException {
+    @Test
+    public void testSaltParameterCompletelyIgnored() throws HashProviderException {
         initializeHashProvider("10", "2a");
-        boolean result = bcryptHashProvider.validateHash(plainText, hashedPassword, salt);
-        Assert.assertEquals(result, expected);
+        char[] password = "testPassword123".toCharArray();
+
+        byte[] hash1 = bcryptHashProvider.calculateHash(password, null);
+        byte[] hash2 = bcryptHashProvider.calculateHash(password, "");
+        byte[] hash3 = bcryptHashProvider.calculateHash(password, "salt1");
+        byte[] hash4 = bcryptHashProvider.calculateHash(password, "salt2");
+
+        String hashStr1 = new String(hash1, StandardCharsets.UTF_8);
+        String hashStr2 = new String(hash2, StandardCharsets.UTF_8);
+        String hashStr3 = new String(hash3, StandardCharsets.UTF_8);
+        String hashStr4 = new String(hash4, StandardCharsets.UTF_8);
+
+        Assert.assertNotEquals(hashStr1, hashStr2);
+        Assert.assertNotEquals(hashStr1, hashStr3);
+        Assert.assertNotEquals(hashStr1, hashStr4);
+        Assert.assertNotEquals(hashStr2, hashStr3);
+        Assert.assertNotEquals(hashStr2, hashStr4);
+        Assert.assertNotEquals(hashStr3, hashStr4);
+    }
+
+    @Test
+    public void testValidateHashWithDifferentSaltParameters() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        char[] password = "testPassword123".toCharArray();
+
+        byte[] hash = bcryptHashProvider.calculateHash(password, "initial-salt");
+
+        boolean isValid1 = bcryptHashProvider.validateHash(password, hash, null);
+        boolean isValid2 = bcryptHashProvider.validateHash(password, hash, "");
+        boolean isValid3 = bcryptHashProvider.validateHash(password, hash, "different-salt");
+        boolean isValid4 = bcryptHashProvider.validateHash(password, hash, "original-salt");
+
+        Assert.assertTrue(isValid1);
+        Assert.assertTrue(isValid2);
+        Assert.assertTrue(isValid3);
+        Assert.assertTrue(isValid4);
+
+        boolean isInvalid = bcryptHashProvider.validateHash("wrong".toCharArray(), hash, "any-salt");
+        Assert.assertFalse(isInvalid);
     }
 
     @Test
     public void testSupportsValidateHash() {
         Assert.assertTrue(bcryptHashProvider.supportsValidateHash());
-    }
-
-    @DataProvider(name = "hashProviderErrorScenarios")
-    public Object[][] hashProviderErrorScenarios() {
-        return new Object[][]{
-                {"".toCharArray(), bcryptHashProvider.generateSalt(), "10", "2a",
-                        ErrorMessage.ERROR_CODE_EMPTY_VALUE.getCode()},
-                {null, bcryptHashProvider.generateSalt(), "10", "2a",
-                        ErrorMessage.ERROR_CODE_EMPTY_VALUE.getCode()},
-                {"password".toCharArray(), "", "10", "2a",
-                        ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode()},
-                {"password".toCharArray(), "invalidSalt", "10", "2a",
-                        ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode()},
-                {"password".toCharArray(), null, "10", "2a",
-                        ErrorMessage.ERROR_CODE_INVALID_SALT_FORMAT.getCode()},
-        };
     }
 
     @Test
@@ -281,6 +312,79 @@ public class BcryptHashProviderTest {
         } catch (HashProviderClientException e) {
             Assert.assertTrue(e.getErrorCode().contains(ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getCode()));
         }
+    }
+
+    @Test(expectedExceptions = HashProviderClientException.class)
+    public void testEmptyPassword() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        byte[] saltBytes = bcryptHashProvider.generateSalt();
+        String saltBase64 = Base64.getEncoder().encodeToString(saltBytes);
+
+        bcryptHashProvider.calculateHash("".toCharArray(), saltBase64);
+    }
+
+    @Test(expectedExceptions = HashProviderClientException.class)
+    public void testNullPassword() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+
+        byte[] saltBytes = bcryptHashProvider.generateSalt();
+        String saltBase64 = Base64.getEncoder().encodeToString(saltBytes);
+
+        bcryptHashProvider.calculateHash(null, saltBase64);
+    }
+
+    @Test
+    public void testVeryShortPassword() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        char[] shortPassword = "a".toCharArray();
+
+        byte[] hash = bcryptHashProvider.calculateHash(shortPassword, null);
+        Assert.assertNotNull(hash);
+
+        boolean isValid = bcryptHashProvider.validateHash(shortPassword, hash, null);
+        Assert.assertTrue(isValid);
+    }
+
+    @Test
+    public void testSpecialCharacterPassword() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        char[] specialPassword = "p@ssw0rd!$%^&*()".toCharArray();
+
+        byte[] hash = bcryptHashProvider.calculateHash(specialPassword, null);
+        Assert.assertNotNull(hash);
+
+        boolean isValid = bcryptHashProvider.validateHash(specialPassword, hash, null);
+        Assert.assertTrue(isValid);
+    }
+
+    @Test
+    public void testUnicodePassword() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        char[] unicodePassword = "pässwörd中文".toCharArray();
+
+        byte[] hash = bcryptHashProvider.calculateHash(unicodePassword, null);
+        Assert.assertNotNull(hash);
+
+        boolean isValid = bcryptHashProvider.validateHash(unicodePassword, hash, null);
+        Assert.assertTrue(isValid);
+    }
+
+    @Test
+    public void testMultipleHashValidations() throws HashProviderException {
+        initializeHashProvider("10", "2a");
+        char[] password = "testPassword123".toCharArray();
+
+        byte[] hash1 = bcryptHashProvider.calculateHash(password, null);
+        byte[] hash2 = bcryptHashProvider.calculateHash(password, "salt1");
+        byte[] hash3 = bcryptHashProvider.calculateHash(password, "salt2");
+
+        Assert.assertTrue(bcryptHashProvider.validateHash(password, hash1, null));
+        Assert.assertTrue(bcryptHashProvider.validateHash(password, hash2, "any-salt"));
+        Assert.assertTrue(bcryptHashProvider.validateHash(password, hash3, "different-salt"));
+
+        Assert.assertFalse(bcryptHashProvider.validateHash("wrong".toCharArray(), hash1, null));
+        Assert.assertFalse(bcryptHashProvider.validateHash("wrong".toCharArray(), hash2, "any-salt"));
+        Assert.assertFalse(bcryptHashProvider.validateHash("wrong".toCharArray(), hash3, "different-salt"));
     }
 
     /**

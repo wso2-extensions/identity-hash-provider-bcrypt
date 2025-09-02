@@ -22,14 +22,14 @@
     <parent>
         <groupId>org.wso2.carbon.identity.hash.provider.bcrypt</groupId>
         <artifactId>identity-hash-provider-bcrypt</artifactId>
-        <version>0.1.7</version>
+        <version>0.1.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.hash.provider.bcrypt</artifactId>
     <packaging>bundle</packaging>
-    <name>WSO2 Carbon - Bcrypt</name>
+    <name>WSO2 Carbon - BCrypt</name>
     <description>BCrypt password hashing algorithm service</description>
     <url>http://wso2.org</url>
 

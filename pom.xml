@@ -28,16 +28,16 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.carbon.identity.hash.provider.bcrypt</groupId>
     <artifactId>identity-hash-provider-bcrypt</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>WSO2 Carbon Bcrypt module</name>
+    <name>WSO2 Carbon BCrypt module</name>
     <url>http://wso2.org</url>
 
     <scm>
         <connection>scm:git:https://github.com/wso2-extensions/identity-hash-provider-bcrypt.git</connection>
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-hash-provider-bcrypt.git</developerConnection>
         <url>https://github.com/wso2-extensions/identity-hash-provider-bcrypt.git</url>
-        <tag>v0.1.7</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>

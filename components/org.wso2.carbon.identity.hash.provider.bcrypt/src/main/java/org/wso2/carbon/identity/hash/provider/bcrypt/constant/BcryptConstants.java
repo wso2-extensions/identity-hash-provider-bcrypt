@@ -38,11 +38,7 @@ public class BcryptConstants {
     public static final int MIN_COST_FACTOR = 4;
     public static final int MAX_COST_FACTOR = 31;
     public static final String RANDOM_ALG_DRBG = "DRBG";
-    public static final List<String> VALID_BCRYPT_VERSIONS;
-    static {
-
-        List<String> versions = Arrays.asList("2a", "2y", "2b");
-        VALID_BCRYPT_VERSIONS = Collections.unmodifiableList(versions);
-    }
+    public static final List<String> VALID_BCRYPT_VERSIONS =
+            Collections.unmodifiableList(Arrays.asList("2a", "2y", "2b"));
 }
 

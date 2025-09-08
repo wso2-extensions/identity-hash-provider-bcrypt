@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.hash.provider.bcrypt;
 
-import org.wso2.carbon.identity.hash.provider.bcrypt.constant.Constants;
+import org.wso2.carbon.identity.hash.provider.bcrypt.constant.BcryptConstants;
 import org.wso2.carbon.user.core.exceptions.HashProviderException;
 import org.wso2.carbon.user.core.hash.HashProvider;
 import org.wso2.carbon.user.core.hash.HashProviderFactory;
@@ -34,6 +34,7 @@ public class BcryptHashProviderFactory implements HashProviderFactory {
 
     @Override
     public HashProvider getHashProvider() {
+
         BcryptHashProvider bcryptHashProvider = new BcryptHashProvider();
         bcryptHashProvider.init();
         return bcryptHashProvider;
@@ -41,6 +42,7 @@ public class BcryptHashProviderFactory implements HashProviderFactory {
 
     @Override
     public HashProvider getHashProvider(Map<String, Object> initProperties) throws HashProviderException {
+
         BcryptHashProvider bcryptHashProvider = new BcryptHashProvider();
         bcryptHashProvider.init(initProperties);
         return bcryptHashProvider;
@@ -48,15 +50,16 @@ public class BcryptHashProviderFactory implements HashProviderFactory {
 
     @Override
     public Set<String> getHashProviderConfigProperties() {
-        Set<String> metaProperties = new HashSet<>();
-        metaProperties.add(Constants.COST_FACTOR_PROPERTY);
-        metaProperties.add(Constants.VERSION_PROPERTY);
 
+        Set<String> metaProperties = new HashSet<>();
+        metaProperties.add(BcryptConstants.COST_FACTOR_PROPERTY);
+        metaProperties.add(BcryptConstants.VERSION_PROPERTY);
         return metaProperties;
     }
 
     @Override
     public String getAlgorithm() {
-        return Constants.BCRYPT_HASHING_ALGORITHM;
+
+        return BcryptConstants.BCRYPT_HASHING_ALGORITHM;
     }
 }

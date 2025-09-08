@@ -36,7 +36,7 @@ import org.wso2.carbon.user.core.hash.HashProviderFactory;
 )
 public class BcryptHashServiceComponent {
 
-    private static final Log log = LogFactory.getLog(BcryptHashServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(BcryptHashServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext componentContext) {
@@ -46,19 +46,18 @@ public class BcryptHashServiceComponent {
             componentContext.getBundleContext().registerService(HashProviderFactory.class.getName(),
                     hashProviderFactory, null);
 
-            if (log.isDebugEnabled()) {
-                log.debug("Bcrypt bundle activated successfully.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Bcrypt bundle activated successfully.");
             }
         } catch (Throwable e) {
-            log.error("Failed to activate Bcrypt bundle", e);
+            LOG.error("Failed to activate Bcrypt bundle", e);
         }
     }
 
     @Deactivate
     protected void deactivate(ComponentContext componentContext) {
 
-        if (log.isDebugEnabled()) {
-            log.debug("Bcrypt bundle is deactivated.");
-        }
+        LOG.debug("Bcrypt bundle is deactivated.");
     }
 }
+

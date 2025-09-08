@@ -22,7 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.hash.provider.bcrypt.constant.Constants;
+import org.wso2.carbon.identity.hash.provider.bcrypt.constant.BcryptConstants;
 import org.wso2.carbon.user.core.exceptions.HashProviderException;
 import org.wso2.carbon.user.core.hash.HashProvider;
 
@@ -41,33 +41,40 @@ public class BcryptHashProviderFactoryTest {
 
     @BeforeClass
     public void initialize() {
+
         bcryptHashProviderFactory = new BcryptHashProviderFactory();
     }
 
     @Test
     public void testGetConfigProperties() {
+
         Set<String> metaPropertiesActual = bcryptHashProviderFactory.getHashProviderConfigProperties();
         Set<String> metaPropertiesExpected = new HashSet<>();
-        metaPropertiesExpected.add(Constants.COST_FACTOR_PROPERTY);
-        metaPropertiesExpected.add(Constants.VERSION_PROPERTY);
+        metaPropertiesExpected.add(BcryptConstants.COST_FACTOR_PROPERTY);
+        metaPropertiesExpected.add(BcryptConstants.VERSION_PROPERTY);
         Assert.assertEquals(metaPropertiesActual, metaPropertiesExpected);
     }
 
     @Test
     public void testGetAlgorithm() {
-        Assert.assertEquals(bcryptHashProviderFactory.getAlgorithm(), Constants.BCRYPT_HASHING_ALGORITHM);
+
+        Assert.assertEquals(bcryptHashProviderFactory.getAlgorithm(), BcryptConstants.BCRYPT_HASHING_ALGORITHM);
     }
 
     @Test
     public void testGetHashProviderWithDefaultParams() {
+
         bcryptHashProvider = bcryptHashProviderFactory.getHashProvider();
         Map<String, Object> bcryptParamsMap = bcryptHashProvider.getParameters();
-        Assert.assertEquals(bcryptParamsMap.get(Constants.COST_FACTOR_PROPERTY), Constants.DEFAULT_COST_FACTOR);
-        Assert.assertEquals(bcryptParamsMap.get(Constants.VERSION_PROPERTY), Constants.DEFAULT_BCRYPT_VERSION);
+        Assert.assertEquals(bcryptParamsMap.get(BcryptConstants.COST_FACTOR_PROPERTY),
+                BcryptConstants.DEFAULT_COST_FACTOR);
+        Assert.assertEquals(bcryptParamsMap.get(BcryptConstants.VERSION_PROPERTY),
+                BcryptConstants.DEFAULT_BCRYPT_VERSION);
     }
 
     @DataProvider(name = "getHashProviderWithParams")
     public Object[][] getHashProviderWithParams() {
+
         return new Object[][]{
                 {"10", "2a"},
                 {"12", "2b"},
@@ -78,75 +85,83 @@ public class BcryptHashProviderFactoryTest {
 
     @Test(dataProvider = "getHashProviderWithParams")
     public void testGetHashProviderWithParams(String costFactor, String version) throws HashProviderException {
+
         Map<String, Object> bcryptParams = new HashMap<>();
-        bcryptParams.put(Constants.COST_FACTOR_PROPERTY, costFactor);
-        bcryptParams.put(Constants.VERSION_PROPERTY, version);
+        bcryptParams.put(BcryptConstants.COST_FACTOR_PROPERTY, costFactor);
+        bcryptParams.put(BcryptConstants.VERSION_PROPERTY, version);
 
         bcryptHashProvider = bcryptHashProviderFactory.getHashProvider(bcryptParams);
 
-        Assert.assertEquals(bcryptHashProvider.getParameters().get(Constants.COST_FACTOR_PROPERTY),
+        Assert.assertEquals(bcryptHashProvider.getParameters().get(BcryptConstants.COST_FACTOR_PROPERTY),
                 Integer.parseInt(costFactor));
-        Assert.assertEquals(bcryptHashProvider.getParameters().get(Constants.VERSION_PROPERTY), version);
+        Assert.assertEquals(bcryptHashProvider.getParameters().get(BcryptConstants.VERSION_PROPERTY), version);
     }
 
     @DataProvider(name = "getHashProviderWithPartialParams")
     public Object[][] getHashProviderWithPartialParams() {
+
         return new Object[][]{
-                {"10", null, Constants.DEFAULT_BCRYPT_VERSION},
-                {null, "2b", Constants.DEFAULT_COST_FACTOR},
-                {null, null, Constants.DEFAULT_COST_FACTOR} // Both null should use defaults
+                {"10", null, BcryptConstants.DEFAULT_BCRYPT_VERSION},
+                {null, "2b", BcryptConstants.DEFAULT_COST_FACTOR},
+                {null, null, BcryptConstants.DEFAULT_COST_FACTOR} // Both null should use defaults
         };
     }
 
     @Test(dataProvider = "getHashProviderWithPartialParams")
     public void testGetHashProviderWithPartialParams(String costFactor, String version, Object expectedDefault)
             throws HashProviderException {
+
         Map<String, Object> bcryptParams = new HashMap<>();
 
         if (costFactor != null) {
-            bcryptParams.put(Constants.COST_FACTOR_PROPERTY, costFactor);
+            bcryptParams.put(BcryptConstants.COST_FACTOR_PROPERTY, costFactor);
         }
         if (version != null) {
-            bcryptParams.put(Constants.VERSION_PROPERTY, version);
+            bcryptParams.put(BcryptConstants.VERSION_PROPERTY, version);
         }
 
         bcryptHashProvider = bcryptHashProviderFactory.getHashProvider(bcryptParams);
         Map<String, Object> actualParams = bcryptHashProvider.getParameters();
 
         if (costFactor == null) {
-            Assert.assertEquals(actualParams.get(Constants.COST_FACTOR_PROPERTY), expectedDefault);
+            Assert.assertEquals(actualParams.get(BcryptConstants.COST_FACTOR_PROPERTY), expectedDefault);
         } else {
-            Assert.assertEquals(actualParams.get(Constants.COST_FACTOR_PROPERTY), Integer.parseInt(costFactor));
+            Assert.assertEquals(actualParams.get(BcryptConstants.COST_FACTOR_PROPERTY), Integer.parseInt(costFactor));
         }
 
         if (version == null) {
-            Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY), Constants.DEFAULT_BCRYPT_VERSION);
+            Assert.assertEquals(actualParams.get(BcryptConstants.VERSION_PROPERTY),
+                    BcryptConstants.DEFAULT_BCRYPT_VERSION);
         } else {
-            Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY), version);
+            Assert.assertEquals(actualParams.get(BcryptConstants.VERSION_PROPERTY), version);
         }
     }
 
     @Test
     public void testGetHashProviderWithEmptyParams() throws HashProviderException {
+
         Map<String, Object> emptyParams = new HashMap<>();
         bcryptHashProvider = bcryptHashProviderFactory.getHashProvider(emptyParams);
 
         Map<String, Object> actualParams = bcryptHashProvider.getParameters();
-        Assert.assertEquals(actualParams.get(Constants.COST_FACTOR_PROPERTY), Constants.DEFAULT_COST_FACTOR);
-        Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY), Constants.DEFAULT_BCRYPT_VERSION);
+        Assert.assertEquals(actualParams.get(BcryptConstants.COST_FACTOR_PROPERTY),
+                BcryptConstants.DEFAULT_COST_FACTOR);
+        Assert.assertEquals(actualParams.get(BcryptConstants.VERSION_PROPERTY), BcryptConstants.DEFAULT_BCRYPT_VERSION);
     }
 
     @Test
     public void testGetHashProviderWithNullParams() throws HashProviderException {
-        bcryptHashProvider = bcryptHashProviderFactory.getHashProvider(null);
 
+        bcryptHashProvider = bcryptHashProviderFactory.getHashProvider(null);
         Map<String, Object> actualParams = bcryptHashProvider.getParameters();
-        Assert.assertEquals(actualParams.get(Constants.COST_FACTOR_PROPERTY), Constants.DEFAULT_COST_FACTOR);
-        Assert.assertEquals(actualParams.get(Constants.VERSION_PROPERTY), Constants.DEFAULT_BCRYPT_VERSION);
+        Assert.assertEquals(actualParams.get(BcryptConstants.COST_FACTOR_PROPERTY),
+                BcryptConstants.DEFAULT_COST_FACTOR);
+        Assert.assertEquals(actualParams.get(BcryptConstants.VERSION_PROPERTY), BcryptConstants.DEFAULT_BCRYPT_VERSION);
     }
 
     @DataProvider(name = "invalidParams")
     public Object[][] invalidParams() {
+
         return new Object[][]{
                 {"3", "2a"},
                 {"32", "2a"},
@@ -159,46 +174,46 @@ public class BcryptHashProviderFactoryTest {
 
     @Test(dataProvider = "invalidParams", expectedExceptions = HashProviderException.class)
     public void testGetHashProviderWithInvalidParams(String costFactor, String version) throws HashProviderException {
-        Map<String, Object> invalidParams = new HashMap<>();
-        invalidParams.put(Constants.COST_FACTOR_PROPERTY, costFactor);
-        invalidParams.put(Constants.VERSION_PROPERTY, version);
 
+        Map<String, Object> invalidParams = new HashMap<>();
+        invalidParams.put(BcryptConstants.COST_FACTOR_PROPERTY, costFactor);
+        invalidParams.put(BcryptConstants.VERSION_PROPERTY, version);
         bcryptHashProviderFactory.getHashProvider(invalidParams);
     }
 
     @Test
     public void testMultipleProviderInstances() throws HashProviderException {
+
         HashProvider provider1 = bcryptHashProviderFactory.getHashProvider();
         HashProvider provider2 = bcryptHashProviderFactory.getHashProvider();
-
         Assert.assertNotSame(provider1, provider2, "Factory should create different instances");
-
         Assert.assertEquals(provider1.getParameters(), provider2.getParameters());
         Assert.assertEquals(provider1.getAlgorithm(), provider2.getAlgorithm());
     }
 
     @Test
     public void testProviderInstancesWithDifferentConfigs() throws HashProviderException {
-        Map<String, Object> params1 = new HashMap<>();
-        params1.put(Constants.COST_FACTOR_PROPERTY, "8");
-        params1.put(Constants.VERSION_PROPERTY, "2a");
 
+        Map<String, Object> params1 = new HashMap<>();
+        params1.put(BcryptConstants.COST_FACTOR_PROPERTY, "8");
+        params1.put(BcryptConstants.VERSION_PROPERTY, "2a");
         Map<String, Object> params2 = new HashMap<>();
-        params2.put(Constants.COST_FACTOR_PROPERTY, "12");
-        params2.put(Constants.VERSION_PROPERTY, "2b");
+        params2.put(BcryptConstants.COST_FACTOR_PROPERTY, "12");
+        params2.put(BcryptConstants.VERSION_PROPERTY, "2b");
 
         HashProvider provider1 = bcryptHashProviderFactory.getHashProvider(params1);
         HashProvider provider2 = bcryptHashProviderFactory.getHashProvider(params2);
 
         Assert.assertNotEquals(provider1.getParameters(), provider2.getParameters());
-        Assert.assertEquals(provider1.getParameters().get(Constants.COST_FACTOR_PROPERTY), 8);
-        Assert.assertEquals(provider2.getParameters().get(Constants.COST_FACTOR_PROPERTY), 12);
-        Assert.assertEquals(provider1.getParameters().get(Constants.VERSION_PROPERTY), "2a");
-        Assert.assertEquals(provider2.getParameters().get(Constants.VERSION_PROPERTY), "2b");
+        Assert.assertEquals(provider1.getParameters().get(BcryptConstants.COST_FACTOR_PROPERTY), 8);
+        Assert.assertEquals(provider2.getParameters().get(BcryptConstants.COST_FACTOR_PROPERTY), 12);
+        Assert.assertEquals(provider1.getParameters().get(BcryptConstants.VERSION_PROPERTY), "2a");
+        Assert.assertEquals(provider2.getParameters().get(BcryptConstants.VERSION_PROPERTY), "2b");
     }
 
     @Test
     public void testFactoryConsistency() {
+
         String algorithm1 = bcryptHashProviderFactory.getAlgorithm();
         String algorithm2 = bcryptHashProviderFactory.getAlgorithm();
         Assert.assertEquals(algorithm1, algorithm2);
@@ -210,10 +225,11 @@ public class BcryptHashProviderFactoryTest {
 
     @Test
     public void testCreatedProviderFunctionality() throws HashProviderException {
+
         HashProvider provider = bcryptHashProviderFactory.getHashProvider();
 
         Assert.assertTrue(provider.supportsValidateHash());
-        Assert.assertEquals(provider.getAlgorithm(), Constants.BCRYPT_HASHING_ALGORITHM);
+        Assert.assertEquals(provider.getAlgorithm(), BcryptConstants.BCRYPT_HASHING_ALGORITHM);
 
         char[] password = "testPassword123".toCharArray();
         byte[] hash = provider.calculateHash(password, null);
@@ -231,18 +247,15 @@ public class BcryptHashProviderFactoryTest {
 
     @Test
     public void testFactoryCreatedProviderSaltIgnoringBehavior() throws HashProviderException {
+
         HashProvider provider = bcryptHashProviderFactory.getHashProvider();
         char[] password = "testPassword123".toCharArray();
 
-        // Test that salt parameter is ignored in factory-created providers too
         byte[] hash1 = provider.calculateHash(password, "salt1");
-        byte[] hash2 = provider.calculateHash(password, "salt1"); // Same salt parameter
+        byte[] hash2 = provider.calculateHash(password, "salt1");
 
-        // Should be different because salt parameter is ignored
         Assert.assertNotEquals(new String(hash1, java.nio.charset.StandardCharsets.UTF_8),
                 new String(hash2, java.nio.charset.StandardCharsets.UTF_8));
-
-        // But validation should still work
         Assert.assertTrue(provider.validateHash(password, hash1, "any-salt"));
         Assert.assertTrue(provider.validateHash(password, hash2, "any-salt"));
     }

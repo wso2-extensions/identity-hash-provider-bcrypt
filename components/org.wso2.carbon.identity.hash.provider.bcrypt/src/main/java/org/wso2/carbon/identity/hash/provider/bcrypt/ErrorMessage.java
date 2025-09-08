@@ -25,13 +25,13 @@ public enum ErrorMessage {
 
     // Client Errors.
     ERROR_CODE_INVALID_COST_FACTOR_RANGE("60001", "Invalid cost factor range",
-            "BCrypt cost factor must be an integer between 4-31."),
+            "Cost factor must be an integer between 4-31."),
     ERROR_CODE_UNSUPPORTED_BCRYPT_VERSION("60002", "Unsupported BCrypt version",
-            "BCrypt version must be a supported string ('2a', '2y', or '2b')."),
-    ERROR_CODE_PLAIN_TEXT_TOO_LONG("60003", "Plain text too long",
-            "Plain text value exceeds BCrypt's 72-byte limit."),
+            "Version must be a supported string ('2a', '2y', or '2b')."),
+    ERROR_CODE_PLAIN_TEXT_TOO_LONG("60003", "Plain validation failed",
+            "Password is too long: Please limit your password to 72 characters."),
     ERROR_CODE_HASH_VALIDATION_FAILED("60004", "Hash validation failed",
-            "Failed to validate BCrypt hash due to invalid input parameters."),
+            "Failed to validate due to invalid input parameters."),
     ERROR_CODE_SALT_GENERATION_FAILED("60005", "Salt generation failed",
             "Failed to generate secure random salt bytes."),
     ERROR_CODE_HASH_GENERATION_FAILED("60006", "Hash generation failed",
@@ -43,6 +43,7 @@ public enum ErrorMessage {
     private final String description;
 
     ErrorMessage(String code, String message, String description) {
+
         this.code = code;
         this.message = message;
         this.description = description;
@@ -54,6 +55,7 @@ public enum ErrorMessage {
      * @return Error code without the scenario prefix.
      */
     public String getCode() {
+
         return code;
     }
 
@@ -63,6 +65,7 @@ public enum ErrorMessage {
      * @return Error scenario message.
      */
     public String getMessage() {
+
         return message;
     }
 
@@ -72,11 +75,13 @@ public enum ErrorMessage {
      * @return Error scenario description.
      */
     public String getDescription() {
+
         return description;
     }
 
     @Override
     public String toString() {
+
         return getCode() + " | " + getMessage() + " | " + getDescription();
     }
 }

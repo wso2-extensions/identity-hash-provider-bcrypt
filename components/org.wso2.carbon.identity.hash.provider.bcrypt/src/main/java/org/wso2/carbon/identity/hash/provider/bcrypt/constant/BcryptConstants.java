@@ -18,13 +18,16 @@
 
 package org.wso2.carbon.identity.hash.provider.bcrypt.constant;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
- * This class contains constants.
+ * This class contains all constants related to bcrypt hashing functionality.
  */
-public class Constants {
+public class BcryptConstants {
 
     public static final String BCRYPT_HASH_PROVIDER_ERROR_PREFIX = "BC-";
-
     public static final String COST_FACTOR_PROPERTY = "bcrypt.cost.factor";
     public static final String VERSION_PROPERTY = "bcrypt.version";
     public static final String BCRYPT_HASHING_ALGORITHM = "BCRYPT";
@@ -32,6 +35,14 @@ public class Constants {
     public static final int BCRYPT_MAX_PLAINTEXT_LENGTH = 73;
     public static final int BCRYPT_SALT_LENGTH = 16;
     public static final String DEFAULT_BCRYPT_VERSION = "2b";
+    public static final int MIN_COST_FACTOR = 4;
+    public static final int MAX_COST_FACTOR = 31;
     public static final String RANDOM_ALG_DRBG = "DRBG";
+    public static final List<String> VALID_BCRYPT_VERSIONS;
+    static {
 
+        List<String> versions = Arrays.asList("2a", "2y", "2b");
+        VALID_BCRYPT_VERSIONS = Collections.unmodifiableList(versions);
+    }
 }
+

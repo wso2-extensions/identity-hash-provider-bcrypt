@@ -45,10 +45,7 @@ public class BcryptHashServiceComponent {
             HashProviderFactory hashProviderFactory = new BcryptHashProviderFactory();
             componentContext.getBundleContext().registerService(HashProviderFactory.class.getName(),
                     hashProviderFactory, null);
-
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Bcrypt bundle activated successfully.");
-            }
+            LOG.debug("Bcrypt bundle activated successfully.");
         } catch (Throwable e) {
             LOG.error("Failed to activate Bcrypt bundle", e);
         }

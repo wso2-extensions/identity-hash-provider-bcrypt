@@ -168,7 +168,7 @@ public class BcryptHashProvider implements HashProvider {
     private void validatePlainTextLength(char[] plainText) throws HashProviderClientException {
 
         if (getUtf8ByteLength(plainText) > BcryptConstants.BCRYPT_MAX_PLAINTEXT_LENGTH) {
-            LOG.debug("Password exceeds maximum allowed length of 72 bytes for bcrypt hashing.");
+            LOG.warn("Password exceeds maximum allowed length of 72 bytes for bcrypt hashing");
             throw new HashProviderClientException(ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getDescription(),
                     BcryptConstants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
                             ErrorMessage.ERROR_CODE_PLAIN_TEXT_TOO_LONG.getCode());

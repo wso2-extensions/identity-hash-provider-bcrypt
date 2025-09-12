@@ -65,7 +65,7 @@ public class BcryptHashProvider implements HashProvider {
                         throw new HashProviderClientException(
                                 ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getDescription(),
                                 BcryptConstants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                                        ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getCode());
+                                        ErrorMessage.ERROR_CODE_INVALID_COST_FACTOR_RANGE.getCode(), e);
                     }
                     validateCostFactor(costFactor);
                 }
@@ -99,7 +99,7 @@ public class BcryptHashProvider implements HashProvider {
             throw new HashProviderClientException(
                     ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILED.getDescription(),
                     BcryptConstants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILED.getCode());
+                            ErrorMessage.ERROR_CODE_HASH_GENERATION_FAILED.getCode(), e);
         }
     }
 
@@ -134,7 +134,7 @@ public class BcryptHashProvider implements HashProvider {
             throw new HashProviderClientException(
                     ErrorMessage.ERROR_CODE_HASH_VALIDATION_FAILED.getDescription(),
                     BcryptConstants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_HASH_VALIDATION_FAILED.getCode());
+                            ErrorMessage.ERROR_CODE_HASH_VALIDATION_FAILED.getCode(), e);
         }
     }
 
@@ -155,7 +155,7 @@ public class BcryptHashProvider implements HashProvider {
             throw new HashProviderClientException(
                     ErrorMessage.ERROR_CODE_SALT_GENERATION_FAILED.getDescription(),
                     BcryptConstants.BCRYPT_HASH_PROVIDER_ERROR_PREFIX +
-                            ErrorMessage.ERROR_CODE_SALT_GENERATION_FAILED.getCode());
+                            ErrorMessage.ERROR_CODE_SALT_GENERATION_FAILED.getCode(), e);
         }
     }
 
@@ -237,4 +237,3 @@ public class BcryptHashProvider implements HashProvider {
         return new String(chars).getBytes(StandardCharsets.UTF_8).length;
     }
 }
-

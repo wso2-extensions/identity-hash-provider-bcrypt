@@ -1,20 +1,19 @@
-# Bcrypt Hashing
+# Bcrypt Hash Provider for WSO2 Identity Server
 
 Bcrypt is recognized as a password hashing function that is designed to protect sensitive data through generating strong, non-reversible hashes. Salting and an adjustable cost factor are utilized to resist brute-force and pre-computed attacks. This makes it an ideal choice for securely storing credentials in user stores.
 
-> [!NOTE]
-> * Currently, Bcrypt supports only JDBC user stores of WSO2 Identity Server.
-> * It should be noted that in WSO2 Identity Server version 7.1.0, this connector is supported specifically at update levels 24 and above.
+This connector provides the Bcrypt hashing algorithm to be used for password hashing in WSO2 Identity Server.
 
-## Configure Bcrypt hashing
+> [!NOTE]
+> * Currently, Bcrypt Hash Procider supports only JDBC user stores of WSO2 Identity Server.
+> * To deploy this connector on WSO2 Identity Server 7.1.0, you must be on update level 24 or higher.
+
+## Configure Bcrypt Hash Provider
 
 This section guides you on how to configure Bcrypt hashing on primary and secondary JDBC user stores.
-* Place the `org.wso2.carbon.identity.hash.provider.bcrypt-*.*.*.jar` file into the`<IS_HOME>/repository/components/dropins` directory. You can download the connector from the [WSO2 Store](https://store.wso2.com/connector/identity-hash-provider-bcrypt).
-### Bcrypt for primary JDBC user store
+* Place the `org.wso2.carbon.identity.hash.provider.bcrypt-*.*.*.jar` file into the`<IS_HOME>/repository/components/dropins` directory. You can download the connector from the [WSO2 Connector Store](https://store.wso2.com/connector/identity-hash-provider-bcrypt).
 
-> [!NOTE]
-> Bcrypt is supported by 
-[primary JDBC user stores](https://is.docs.wso2.com/en/7.0.0/guides/users/user-stores/primary-user-store/configure-a-jdbc-user-store/) but must be enabled in the deployment.toml file before initial server startup. Since Bcrypt automatically generates a unique, cryptographically strong salt for each password, you must also disable the user store's external salt handling for it to function correctly .
+### Bcrypt for primary JDBC user store
 
 1. Open the deployment.toml file located in the `<IS_HOME>/repository/conf` directory.
 
@@ -25,12 +24,14 @@ This section guides you on how to configure Bcrypt hashing on primary and second
      PasswordDigest = "BCRYPT"
      StoreSaltedPassword = "false"
     "Hash.Algorithm.Properties" = "{bcrypt.version:2a,bcrypt.cost.factor:10}"
-   ```
+   ```  
 3. Restart the WSO2 Identity Server.
 
-* The `Hash.Algorithm.Properties` [configuration](#bcrypt-parameters) is optional and may be omitted if the default values are sufficient for the deployment.
+* Since Bcrypt automatically generates a unique, cryptographically strong salt for each password,  the user store's external salt handling is disabled for it to function properly.
+
+* The `Hash.Algorithm.Properties` configuration is optional and may be omitted if the default values are sufficient for the deployment. You can find configurations explained [here](#bcrypt-parameters).
   
-* If Bcrypt is not defined during the initial server startup, existing passwords will not be hashed using Bcrypt. In such cases, administrators will need to [reset user passwords](https://is.docs.wso2.com/en/latest/guides/account-configurations/account-recovery/password-recovery/) after enabling Bcrypt.
+* If Bcrypt is configured after the initial server startup, existing user passwords will not be hashed using Bcrypt and those passwords will be unusable. In such cases, administrators/users will need to [reset user passwords](https://is.docs.wso2.com/en/latest/guides/account-configurations/account-recovery/password-recovery/) after enabling Bcrypt.
   
 ### Bcrypt for secondary JDBC user stores
 
@@ -54,23 +55,21 @@ This section guides you on how to configure Bcrypt hashing on primary and second
     <tr class="odd">
     <td>Password Hashing Algorithm</td>
     <td><code>BCRYPT</code></td>
-    <td>Name of the hashing algorithm supported by the user store.</td>
+    <td>Name of the hashing algorithm to be used by the user store.</td>
     </tr>
     <tr class = "odd">
     <td>Enable Salted Passwords</td>
     <td><code>false</code></td>
-    <td>Determines whether passwords are stored with an additional salt. For bcrypt, this should be set to false.</td>
+    <td>Bcrypt generates a unique cryptographic salt per password. So external salt handling in the user store level is disabled.</td>
     </tr>
     <tr class="even">
-    <td>UserStore Hashing <a href="#bcrypt-parameters">Configurations</a> (optional)</td>
+    <td>UserStore Hashing Configurations (optional)</td>
     <td><code>{bcrypt.version:2b,bcrypt.cost.factor:12}</code></td>
-    <td>Additional parameters required for password hashing algorithm. This should be given in JSON format.</td>
+    <td> <a href="#bcrypt-parameters">Additional parameters </a> required for password hashing algorithm. This should be given in JSON format.</td>
         </tbody>
     </table>
 
 5. Click **Update** to save the configurations.
-
-   Successful updation of these configurations will convert the password hashing algorithm of the user store to Bcrypt.
 
 > [!NOTE]
 >  **Existing user stores**
@@ -110,5 +109,7 @@ This section guides you on how to configure Bcrypt hashing on primary and second
 </table>
 
 >[!NOTE]
->Passwords must be 72 characters or fewer when using the Bcrypt hashing algorithm. For guidance on updating password policy, refer to the [documentation](https://is.docs.wso2.com/en/7.1.0/guides/account-configurations/login-security/password-validation/#password-input-validation).
+>Passwords should not be longer than 72 characters when using the Bcrypt hashing algorithm. For guidance on updating password policy, refer to the [documentation](https://is.docs.wso2.com/en/7.1.0/guides/account-configurations/login-security/password-validation/#password-input-validation).
    
+
+

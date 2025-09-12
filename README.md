@@ -1,10 +1,10 @@
 # Bcrypt Hashing
 
-Bcrypt is recognized as a password hashing function that is designed to protect sensitive data through generating strong, non-reversible hashes. non-reversible hashes. Salting and an adjustable cost factor are utilized to resist brute-force and pre-computed attacks. This makes it an ideal choice for securely storing credentials in user stores.
+Bcrypt is recognized as a password hashing function that is designed to protect sensitive data through generating strong, non-reversible hashes. Salting and an adjustable cost factor are utilized to resist brute-force and pre-computed attacks. This makes it an ideal choice for securely storing credentials in user stores.
 
 > [!NOTE]
 > * Currently, Bcrypt supports only JDBC user stores of WSO2 Identity Server.
-> * It should be noted that in WSO2 Identity Server version 7.1.0,the Bcrypt hashing algorithm is supported specifically at update levels 24 and above.
+> * It should be noted that in WSO2 Identity Server version 7.1.0, this connector is supported specifically at update levels 24 and above.
 
 ## Configure Bcrypt hashing
 
@@ -110,7 +110,5 @@ This section guides you on how to configure Bcrypt hashing on primary and second
 </table>
 
 >[!NOTE]
->Passwords must be 72 characters or fewer when using the Bcrypt hashing algorithm. For guidance on creating valid passwords, refer to the [documentation](https://is.docs.wso2.com/en/7.1.0/guides/account-configurations/login-security/password-validation/#password-input-validation).
+>Passwords must be 72 characters or fewer when using the Bcrypt hashing algorithm. For guidance on updating password policy, refer to the [documentation](https://is.docs.wso2.com/en/7.1.0/guides/account-configurations/login-security/password-validation/#password-input-validation).
    
-
-

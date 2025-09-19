@@ -42,6 +42,7 @@
 
     <modules>
         <module>components/org.wso2.carbon.identity.hash.provider.bcrypt</module>
+        <module>features/org.wso2.carbon.identity.hash.provider.bcrypt.server.feature</module>
     </modules>
 
     <dependencyManagement>
@@ -96,7 +97,7 @@
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity.hash.provider.bcrypt</groupId>
-                <artifactId>feature</artifactId>
+                <artifactId>org.wso2.carbon.identity.hash.provider.bcrypt.server.feature</artifactId>
                 <version>${project.version}</version>
                 <type>zip</type>
             </dependency>

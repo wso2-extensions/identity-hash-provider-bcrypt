@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.wso2.carbon.identity.hash.provider.bcrypt</groupId>
         <artifactId>identity-hash-provider-bcrypt</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>1.0.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -30,7 +30,7 @@
     <packaging>pom</packaging>
     <name>WSO2 Carbon - BCrypt Feature</name>
     <url>http://wso2.org</url>
-    <description>This feature contains the core bundles required for BCrypt</description>
+    <description>This feature contains the core bundles required for BCrypt Hash Provider</description>
 
     <dependencies>
         <dependency>

@@ -112,8 +112,8 @@
                             org.osgi.service.component; version = "${osgi.service.component.imp.pkg.version.range}",
                             org.wso2.carbon.user.core.exceptions; version = "${carbon.kernel.package.import.version.range}",
                             org.wso2.carbon.user.core.hash; version = "${carbon.kernel.package.import.version.range}",
-                            org.bouncycastle.crypto.generators.*;version="[1.6,2.0)",
-                            org.bouncycastle.crypto;version="[1.70,2.0)",
+                            org.bouncycastle.crypto.generators.*;version="[1.6,2.0)"; resolution:=optional,
+                            org.bouncycastle.crypto;version="[1.70,2.0)"; resolution:=optional,
                         </Import-Package>
                     </instructions>
                 </configuration>
